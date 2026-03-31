@@ -1,0 +1,25 @@
+[package]
+name = "vzglyd-sidecar"
+version = "0.1.0"
+edition = "2024"
+description = "Networking and IPC utilities for VZGLYD slide sidecars"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/vzglyd/vzglyd"
+homepage = "https://github.com/vzglyd/vzglyd"
+documentation = "https://docs.rs/vzglyd-sidecar"
+readme = "README.md"
+keywords = ["vzglyd", "sidecar", "wasi", "wasm", "https"]
+categories = ["wasm", "network-programming", "embedded"]
+rust-version = "1.85"
+
+[dependencies]
+rustls = { version = "0.23", default-features = false, features = ["std", "tls12", "logging", "custom-provider"] }
+rustls-pki-types = "1"
+rustls-rustcrypto = "0.0.2-alpha"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+webpki-roots = "0.26"
+
+[package.metadata.docs.rs]
+targets = ["wasm32-wasip1"]
+default-target = "wasm32-wasip1"
