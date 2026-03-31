@@ -104,6 +104,9 @@ pub fn https_get_text(host: &str, path: &str) -> Result<String, Error> {
         .map_err(|error| Error::Io(format!("HTTP body was not valid UTF-8: {error}")))
 }
 
+/// Body, ETag, and Last-Modified returned by a conditional GET.
+pub type ConditionalGetResult = Result<(Vec<u8>, Option<String>, Option<String>), Error>;
+
 /// Perform a conditional HTTPS `GET` request using `ETag` and `Last-Modified` hints.
 ///
 /// When the server responds with `304 Not Modified`, the returned body is empty and the cached
@@ -117,7 +120,7 @@ pub fn https_get_conditional(
     path: &str,
     etag: Option<&str>,
     last_modified: Option<&str>,
-) -> Result<(Vec<u8>, Option<String>, Option<String>), Error> {
+) -> ConditionalGetResult {
     let mut headers = Vec::new();
     if let Some(etag) = etag {
         headers.push(("If-None-Match".to_string(), etag.to_string()));
