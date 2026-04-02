@@ -23,6 +23,7 @@
 
 mod channel;
 mod dns;
+pub mod host_request;
 mod http;
 mod poll;
 mod socket;
@@ -32,6 +33,7 @@ use std::cell::RefCell;
 use std::fmt;
 
 pub use channel::{channel_active, channel_poll, channel_push, info_log, sleep_secs};
+pub use host_request::{Header as HostHeader, HostRequest, HostResponse};
 pub use poll::poll_loop;
 use std::time::Duration;
 
@@ -87,9 +89,9 @@ impl From<std::io::Error> for Error {
 ///
 /// # Errors
 ///
-/// Returns [`Error`] if DNS resolution, socket connection, TLS setup, or the HTTP request fails.
+/// Returns [`Error`] if the host-mediated request or HTTP response handling fails.
 pub fn https_get(host: &str, path: &str) -> Result<Vec<u8>, Error> {
-    let response = perform_get(host, path, &[])?;
+    let response = execute_https_get(host, path, &[])?;
     http::successful_body(response)
 }
 
@@ -114,7 +116,7 @@ pub type ConditionalGetResult = Result<(Vec<u8>, Option<String>, Option<String>)
 ///
 /// # Errors
 ///
-/// Returns [`Error`] if DNS resolution, socket connection, TLS setup, or the HTTP request fails.
+/// Returns [`Error`] if the host-mediated request or HTTP response handling fails.
 pub fn https_get_conditional(
     host: &str,
     path: &str,
@@ -129,7 +131,7 @@ pub fn https_get_conditional(
         headers.push(("If-Modified-Since".to_string(), last_modified.to_string()));
     }
 
-    let response = perform_get(host, path, &headers)?;
+    let response = execute_https_get(host, path, &headers)?;
     if response.status_code == 304 {
         return Ok((
             Vec::new(),
@@ -160,8 +162,20 @@ pub fn env_var(name: &str) -> Option<String> {
 ///
 /// Returns [`Error`] if DNS resolution fails or no socket can be connected before the timeout.
 pub fn tcp_connect(host: &str, port: u16, timeout_ms: u32) -> Result<Duration, Error> {
-    let addrs = DNS_RESOLVER.with(|resolver| resolver.borrow_mut().resolve(host))?;
-    socket::connect_any(&addrs, port, Duration::from_millis(u64::from(timeout_ms)))
+    match execute_host_request(HostRequest::TcpConnect {
+        host: host.to_string(),
+        port,
+        timeout_ms,
+    })? {
+        HostResponse::TcpConnect { elapsed_ms } => Ok(Duration::from_millis(elapsed_ms)),
+        HostResponse::Error {
+            error_kind,
+            message,
+        } => Err(host_request::decode_error(error_kind, message)),
+        HostResponse::Http { .. } => Err(Error::Io(
+            "host returned an HTTP response for tcp_connect".to_string(),
+        )),
+    }
 }
 
 /// Split an HTTPS URL into `(host, path)` for use with [`https_get`] helpers.
@@ -200,6 +214,63 @@ fn perform_get(
 ) -> Result<http::HttpResponse, Error> {
     let addrs = DNS_RESOLVER.with(|resolver| resolver.borrow_mut().resolve(host))?;
     http::https_get_with_candidates(host, path, headers, &addrs)
+}
+
+fn execute_https_get(
+    host: &str,
+    path: &str,
+    headers: &[(String, String)],
+) -> Result<http::HttpResponse, Error> {
+    match execute_host_request(HostRequest::HttpsGet {
+        host: host.to_string(),
+        path: path.to_string(),
+        headers: headers
+            .iter()
+            .map(|(name, value)| HostHeader {
+                name: name.clone(),
+                value: value.clone(),
+            })
+            .collect(),
+    })? {
+        HostResponse::Http {
+            status_code,
+            headers,
+            body,
+        } => Ok(http::HttpResponse {
+            status_code,
+            etag: header_value(&headers, "etag").map(ToOwned::to_owned),
+            last_modified: header_value(&headers, "last-modified").map(ToOwned::to_owned),
+            body,
+        }),
+        HostResponse::Error {
+            error_kind,
+            message,
+        } => Err(host_request::decode_error(error_kind, message)),
+        HostResponse::TcpConnect { .. } => Err(Error::Io(
+            "host returned a tcp_connect response for an HTTPS request".to_string(),
+        )),
+    }
+}
+
+fn execute_host_request(request: HostRequest) -> Result<HostResponse, Error> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let request_bytes = host_request::encode_request(&request)?;
+        let response_bytes = channel::network_roundtrip(&request_bytes)?;
+        host_request::decode_response(&response_bytes)
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        Ok(host_request::execute_request(request))
+    }
+}
+
+fn header_value<'a>(headers: &'a [HostHeader], name: &str) -> Option<&'a str> {
+    headers
+        .iter()
+        .find(|header| header.name.eq_ignore_ascii_case(name))
+        .map(|header| header.value.as_str())
 }
 
 #[cfg(test)]

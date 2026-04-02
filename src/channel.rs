@@ -1,6 +1,9 @@
 use std::time::Duration;
 
 #[cfg(target_arch = "wasm32")]
+use crate::Error;
+
+#[cfg(target_arch = "wasm32")]
 #[link(wasm_import_module = "vzglyd_host")]
 unsafe extern "C" {
     #[link_name = "channel_push"]
@@ -11,6 +14,12 @@ unsafe extern "C" {
     fn host_channel_active() -> i32;
     #[link_name = "log_info"]
     fn host_log_info(ptr: *const u8, len: i32) -> i32;
+    #[link_name = "network_request"]
+    fn host_network_request(ptr: *const u8, len: i32) -> i32;
+    #[link_name = "network_response_len"]
+    fn host_network_response_len() -> i32;
+    #[link_name = "network_response_read"]
+    fn host_network_response_read(ptr: *mut u8, len: i32) -> i32;
 }
 
 /// Push a new payload into the shared sidecar-to-slide channel.
@@ -71,4 +80,35 @@ pub fn info_log(message: &str) {
 
     #[cfg(not(target_arch = "wasm32"))]
     let _ = message;
+}
+
+#[cfg(target_arch = "wasm32")]
+pub(crate) fn network_roundtrip(request: &[u8]) -> Result<Vec<u8>, Error> {
+    unsafe {
+        let submit_status = host_network_request(request.as_ptr(), request.len() as i32);
+        if submit_status != 0 {
+            return Err(Error::Io(format!(
+                "host network_request failed with status {submit_status}"
+            )));
+        }
+
+        let response_len = host_network_response_len();
+        if response_len < 0 {
+            return Err(Error::Io(format!(
+                "host network_response_len failed with status {response_len}"
+            )));
+        }
+
+        let mut response = vec![0u8; response_len as usize];
+        let read_status =
+            host_network_response_read(response.as_mut_ptr(), response.len() as i32);
+        if read_status < 0 {
+            return Err(Error::Io(format!(
+                "host network_response_read failed with status {read_status}"
+            )));
+        }
+
+        response.truncate(read_status as usize);
+        return Ok(response);
+    }
 }
