@@ -6,7 +6,7 @@ Add it to a sidecar crate:
 
 ```toml
 [dependencies]
-vzglyd-sidecar = "0.1"
+vzglyd-sidecar = { git = "https://github.com/vzglyd/vzglyd-sidecar" }
 ```
 
 Typical usage:
@@ -27,4 +27,5 @@ This crate is intended for the `wasm32-wasip1` target used by VZGLYD sidecars.
 Further reading:
 
 - [Slide authoring guide](https://github.com/vzglyd/vzglyd/blob/main/docs/authoring-guide.md)
+- [vzglyd-sidecar repository](https://github.com/vzglyd/vzglyd-sidecar)
 - [VZGLYD repository](https://github.com/vzglyd/vzglyd)

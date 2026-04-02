@@ -4,11 +4,12 @@ Thanks for your interest in contributing.
 
 ## What this crate is
 
-`vzglyd-sidecar` provides networking and IPC utilities for vzglyd slide sidecars. All code must compile for the `wasm32-wasip1` target.
+`vzglyd-sidecar` provides networking and IPC utilities for vzglyd slide sidecars. Changes here affect every sidecar that relies on the VZGLYD channel and socket ABI, so keep the surface small and deliberate.
 
 ## Development
 
 ```bash
+cargo test
 cargo check --target wasm32-wasip1
 cargo clippy -- -D warnings
 cargo fmt
