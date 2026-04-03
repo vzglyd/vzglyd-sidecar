@@ -1,10 +1,10 @@
-# Contributing to vzglyd-sidecar
+# Contributing to VRX-64-sidecar
 
 Thanks for your interest in contributing.
 
 ## What this crate is
 
-`vzglyd-sidecar` provides networking and IPC utilities for vzglyd slide sidecars. Changes here affect every sidecar that relies on the VZGLYD channel and socket ABI, so keep the surface small and deliberate.
+`VRX-64-sidecar` provides networking and IPC utilities for vzglyd slide sidecars. Changes here affect every sidecar that relies on the VZGLYD channel and socket ABI, so keep the surface small and deliberate.
 
 ## Development
 

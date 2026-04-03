@@ -1,16 +1,19 @@
 [package]
-name = "vzglyd-sidecar"
+name = "VRX-64-sidecar"
 version = "0.1.0"
 edition = "2024"
 description = "Networking and IPC utilities for VZGLYD slide sidecars"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/vzglyd/vzglyd-sidecar"
-homepage = "https://github.com/vzglyd/vzglyd-sidecar"
-documentation = "https://docs.rs/vzglyd-sidecar"
+repository = "https://github.com/vzglyd/VRX-64-sidecar"
+homepage = "https://github.com/vzglyd/VRX-64-sidecar"
+documentation = "https://docs.rs/VRX-64-sidecar"
 readme = "README.md"
 keywords = ["vzglyd", "sidecar", "wasi", "wasm", "https"]
 categories = ["wasm", "network-programming", "embedded"]
 rust-version = "1.85"
+
+[lib]
+name = "vzglyd_sidecar"
 
 [dependencies]
 rustls = { version = "0.23", default-features = false, features = ["std", "tls12", "logging", "custom-provider"] }

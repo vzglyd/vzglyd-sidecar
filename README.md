@@ -1,12 +1,12 @@
-# `vzglyd-sidecar`
+# `VRX-64-sidecar`
 
-`vzglyd-sidecar` is the standard library for VZGLYD sidecars: small `wasm32-wasip1` programs that fetch live data and push it to a paired slide.
+`VRX-64-sidecar` is the standard library for VZGLYD sidecars: small `wasm32-wasip1` programs that fetch live data and push it to a paired slide.
 
 Add it to a sidecar crate:
 
 ```toml
 [dependencies]
-vzglyd-sidecar = { git = "https://github.com/vzglyd/vzglyd-sidecar" }
+VRX-64-sidecar = { git = "https://github.com/vzglyd/VRX-64-sidecar" }
 ```
 
 Typical usage:
@@ -27,5 +27,5 @@ This crate is intended for the `wasm32-wasip1` target used by VZGLYD sidecars.
 Further reading:
 
 - [Slide authoring guide](https://github.com/vzglyd/vzglyd/blob/main/docs/authoring-guide.md)
-- [vzglyd-sidecar repository](https://github.com/vzglyd/vzglyd-sidecar)
+- [VRX-64-sidecar repository](https://github.com/vzglyd/VRX-64-sidecar)
 - [VZGLYD repository](https://github.com/vzglyd/vzglyd)
