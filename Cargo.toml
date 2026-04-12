@@ -26,3 +26,11 @@ webpki-roots = "0.26"
 [package.metadata.docs.rs]
 targets = ["wasm32-wasip1"]
 default-target = "wasm32-wasip1"
+
+# Reduce build artifact sizes
+[profile.dev]
+debug = 0
+incremental = false
+
+[profile.release]
+strip = true
