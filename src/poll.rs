@@ -35,9 +35,12 @@ impl PollRuntime for HostRuntime {
     }
 
     fn sleep(&self, secs: u32) {
-        // Announce sleep duration to the host before blocking, enabling the TUI countdown.
-        crate::channel::announce_sleep(i64::from(secs) * 1000);
-        sleep_secs(secs);
+        // Announce the sleep to the host. The host returns 1 to skip the sleep
+        // (force-refresh requested via the TUI 'f' key).
+        let skip = crate::channel::announce_sleep(i64::from(secs) * 1000);
+        if skip == 0 {
+            sleep_secs(secs);
+        }
     }
 }
 
